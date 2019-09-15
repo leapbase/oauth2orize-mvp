@@ -40,9 +40,20 @@ npm install
 ./start
 ```
 
-Open in browser and follow instruction
+Open in browser and visit:
 
-```
+http://local.helloworld3000.com:3002
+
+Web browser will redirect to:
+
 http://local.helloworld3000.com:3002/auth/example-oauth2orize
+
+If user is not authorized, sso login will open:
+
+http://local.foobar3000.com:3000/login
+
+After user login, browser will redirect to success page:
+
+http://local.helloworld3000.com:3002/success.html
 ```
 
