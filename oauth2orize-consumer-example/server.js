@@ -57,14 +57,14 @@
     rest.get('/externalapi/account', function (req, res, next) {
       console.log('[using accessToken]', req.user.accessToken);
       if (false) { next(); }
+      
       var request = require('request')
-        , options = {
-            url: pConf.protocol + '://' + pConf.host + '/api/exampleauth/me'
-          , headers: {
-              'Authorization': 'Bearer ' + req.user.accessToken
-            }
-          }
-        ;
+      var options = {
+        url: pConf.protocol + '://' + pConf.host + '/api/userinfo', 
+        headers: {
+          'Authorization': 'Bearer ' + req.user.accessToken
+        }
+      };
 
       function callback(error, response, body) {
         if (!error && response.statusCode === 200) {
@@ -108,7 +108,11 @@
       res.end('thanks for playing');
     });
     rest.get('/success.html', function(req, res) {
-      res.end('sso login is success');
+      res.end(
+        '<html><body>' + 
+        'sso login is success<br/><br/>' + 
+        '<a href="/externalapi/account">user info</a>' + 
+        '</body></html>');
     });
     rest.get('/', function(req, res) {
       res.statusCode = 302;

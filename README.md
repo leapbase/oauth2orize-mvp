@@ -59,3 +59,9 @@ http://local.foobar3000.com:3000/login
 After user login, browser will redirect to success page:
 
 http://local.helloworld3000.com:3002/success.html
+
+Click on 'user info' link to get user account info:
+
+http://local.helloworld3000.com:3002/externalapi/account
+
+
