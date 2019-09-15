@@ -1,26 +1,29 @@
 (function () {
   'use strict';
 
-  var connect = require('connect')
-    , path = require('path')
-    , passport = require('passport')
-    , User = require('./user')
-    , ExampleStrategy = require('./passport-example/strategy').Strategy
-    , app = connect()
-    , server
-    , port = process.argv[2] || 3002
-    , oauthConfig = require('./oauth-config')
-    , pConf = oauthConfig.provider
-    , lConf = oauthConfig.consumer
-      // for Ward Steward
-    , opts = require('./oauth-consumer-config');
+  var express = require('express');
+  var session = require('express-session');
+  var cookieParser = require('cookie-parser');
+  var bodyParser = require('body-parser');
+  var compression = require('compression');
+  var path = require('path');
+  var passport = require('passport');
+  var User = require('./user');
+  var ExampleStrategy = require('./passport-example/strategy').Strategy;
+  var app = express();
+  var server;
+  var port = process.argv[2] || 3002;
+  var oauthConfig = require('./oauth-config');
+  var pConf = oauthConfig.provider;
+  var lConf = oauthConfig.consumer;
+  var opts = require('./oauth-consumer-config');
 
   console.log('>>> pConf:', pConf);
   console.log('>>> lConf:', lConf);
   
-  if (!connect.router) {
-    connect.router = require('connect_router');
-  }
+  // if (!connect.router) {
+  //   connect.router = require('connect_router');
+  // }
 
   // Passport session setup.
   //   To support persistent login sessions, Passport needs to be able to
@@ -41,11 +44,11 @@
 
   passport.use(new ExampleStrategy({
       // see https://github.com/jaredhanson/oauth2orize/blob/master/examples/all-grants/db/clients.js
-      clientID: opts.clientId
-    , clientSecret: opts.clientSecret
-    , callbackURL: lConf.protocol + "://" + lConf.host + "/auth/example-oauth2orize/callback"
-    }
-  , function (accessToken, refreshToken, profile, done) {
+      clientID: opts.clientId,
+      clientSecret: opts.clientSecret,
+      callbackURL: lConf.protocol + "://" + lConf.host + "/auth/example-oauth2orize/callback"
+    },
+    function (accessToken, refreshToken, profile, done) {
       User.findOrCreate({ profile: profile }, function (err, user) {
         user.accessToken = accessToken;
         return done(err, user);
@@ -53,11 +56,21 @@
     }
   ));
 
-  function route(rest) {
-    rest.get('/externalapi/account', function (req, res, next) {
+  function route(router) {
+    
+    router.get('/', function(req, res) {
+      res.statusCode = 302;
+      res.setHeader('Location', '/auth/example-oauth2orize');
+      res.end('');
+    });
+    
+    router.get('/about', function (req, res) {
+      res.send('About oauth2orize consumer/client');
+    })
+    
+    router.get('/externalapi/account', function (req, res, next) {
       console.log('[using accessToken]', req.user.accessToken);
       if (false) { next(); }
-      
       var request = require('request')
       var options = {
         url: pConf.protocol + '://' + pConf.host + '/api/userinfo', 
@@ -65,7 +78,6 @@
           'Authorization': 'Bearer ' + req.user.accessToken
         }
       };
-
       function callback(error, response, body) {
         if (!error && response.statusCode === 200) {
           res.end(body);
@@ -73,19 +85,21 @@
           res.end('error: \n' + body);
         }
       }
-
       request(options, callback);
     });
-    /*
-    */
-    rest.get('/auth/example-oauth2orize', passport.authenticate('exampleauth', { scope: ['email'] }));
-    rest.get('/auth/example-oauth2orize/callback'
+    
+    router.get(
+      '/auth/example-oauth2orize', 
+      passport.authenticate('exampleauth', { scope: ['email'] }));
+    
+    router.get('/auth/example-oauth2orize/callback',
       //passport.authenticate('facebook', { successRedirect: '/close.html?accessToken=blar',
       //                                    failureRedirect: '/close.html?error=foo' }));
-    , passport.authenticate('exampleauth', { failureRedirect: '/close.html?error=foo' })
+      passport.authenticate('exampleauth', { failureRedirect: '/close.html?error=foo' })
     );
-    rest.get('/auth/example-oauth2orize/callback'
-    , function (req, res) {
+    
+    router.get('/auth/example-oauth2orize/callback', 
+      function (req, res) {
         console.log('req.session');
         console.log(req.session);
         var url = '/success.html';
@@ -103,35 +117,33 @@
         //next();
       }
     );
-    rest.post('/auth/example-oauth2orize/callback', function (req, res/*, next*/) {
+    
+    router.post('/auth/example-oauth2orize/callback', function (req, res) {
       console.log('req.user', req.user);
       res.end('thanks for playing');
     });
-    rest.get('/success.html', function(req, res) {
+    
+    router.get('/success.html', function(req, res) {
       res.end(
         '<html><body>' + 
         'sso login is success<br/><br/>' + 
         '<a href="/externalapi/account">user info</a>' + 
         '</body></html>');
     });
-    rest.get('/', function(req, res) {
-      res.statusCode = 302;
-      res.setHeader('Location', '/auth/example-oauth2orize');
-      res.end('');
-    });
   }
 
   app
-    .use(connect.query())
-    .use(connect.json())
-    .use(connect.urlencoded())
-    .use(connect.compress())
-    .use(connect.cookieParser())
-    .use(connect.session({ secret: 'keyboard mouse' }))
+    .use(express.query())
+    .use(express.json())
+    .use(express.urlencoded())
+    .use(compression())
+    .use(cookieParser())
+    .use(bodyParser.json())
+    .use(session({ secret: 'keyboard mouse' }))
     .use(passport.initialize())
     .use(passport.session())
-    .use(connect.router(route))
-    .use(connect.static(path.join(__dirname, 'public')));
+    .use(express.static(path.join(__dirname, 'public')));
+  route(app);
 
   module.exports = app;
 
