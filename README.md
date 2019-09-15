@@ -13,7 +13,9 @@ https://github.com/awais786327/oauth2orize-examples
 
 # Get Started
 
-Setup local domain name, add the following in hosts file on your local computer
+## Setup local domain name
+
+add the following in hosts file on your local computer
 
 ```
 ## sso test
@@ -21,7 +23,7 @@ Setup local domain name, add the following in hosts file on your local computer
 127.0.0.1    local.foobar3000.com
 ```
 
-Run oauth2orize SSO server
+## Run oauth2orize SSO server
 
 ```
 cd oauth2orize-server-example/
@@ -31,7 +33,7 @@ npm install
 ./start
 ```
 
-Run oauth2orize SSO client
+## Run oauth2orize SSO client
 ```
 cd oauth2orize-consumer-example/
 
@@ -40,7 +42,9 @@ npm install
 ./start
 ```
 
-Open in browser and visit:
+## Test in browser 
+
+Open the following link in browser:
 
 http://local.helloworld3000.com:3002
 
@@ -55,5 +59,3 @@ http://local.foobar3000.com:3000/login
 After user login, browser will redirect to success page:
 
 http://local.helloworld3000.com:3002/success.html
-```
-
